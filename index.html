@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101014">
+  <meta name="description" content="FOTO-POTO — место для твоих фотографий и историй.">
+  <title>FOTO-POTO — фотолента</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="FOTO-POTO home"><span class="brand-mark">F</span><span>FOTO<span class="brand-dot">-</span>POTO</span></a>
+      <div class="topbar-note">Твоя лента. Твои моменты.</div>
+      <div class="account-area">
+        <span id="user-label" class="user-label">Гость</span>
+        <button id="auth-open" class="button button-quiet">Войти</button>
+        <button id="sign-out" class="button button-quiet hidden">Выйти</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="side-nav">
+        <div class="side-label">МЕНЮ</div>
+        <button class="nav-item active" id="feed-nav"><span>⌂</span> Лента</button>
+        <button class="nav-item" id="new-post-nav"><span>＋</span> Создать пост</button>
+        <div class="side-tip"><div class="tip-icon">✦</div><strong>Лови момент</strong><p>Загружай фото, добавляй подпись и делись тем, что тебе нравится.</p></div>
+      </aside>
+
+      <section class="main-column">
+        <div class="welcome-row">
+          <div><p class="eyebrow">PHOTO COMMUNITY</p><h1>Свежие <span>кадры.</span></h1><p class="subheading">Смотри, публикуй и находи интересное.</p></div>
+          <div class="live-mark"><i></i> ФОТОЛЕНТА</div>
+        </div>
+
+        <section id="composer" class="composer panel">
+          <div class="composer-heading"><div class="avatar avatar-self">+</div><div><strong>Есть чем поделиться?</strong><span>Добавь новый кадр в FOTO-POTO</span></div></div>
+          <form id="post-form">
+            <label class="upload-zone" for="photo-file" id="upload-zone">
+              <span class="upload-symbol">＋</span><strong>Выбрать фотографию</strong><small>JPG, PNG или WEBP · до 5 МБ</small>
+              <input id="photo-file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            </label>
+            <img id="image-preview" class="image-preview hidden" alt="Предпросмотр фотографии">
+            <textarea id="caption" maxlength="500" placeholder="Напиши что-нибудь к фотографии..." rows="2"></textarea>
+            <div class="composer-bottom">
+              <select id="post-tag" aria-label="Тег публикации">
+                <option value="Разное"># Разное</option><option value="Мемы"># Мемы</option><option value="Животные"># Животные</option><option value="Природа"># Природа</option><option value="Игры"># Игры</option><option value="Творчество"># Творчество</option>
+              </select>
+              <button class="button button-primary" type="submit" id="publish-button">Опубликовать <span>↗</span></button>
+            </div>
+            <p class="form-hint" id="publish-hint">Для публикации войди в аккаунт. Каждое фото проходит проверку на откровенный сексуальный контент.</p>
+          </form>
+        </section>
+
+        <div class="feed-toolbar"><div><strong>Лента сообщества</strong><span id="post-count">Загружаем...</span></div><select id="sort-select" aria-label="Сортировка"><option value="new">Сначала новые</option><option value="popular">Популярные</option></select></div>
+        <div id="status-banner" class="status-banner hidden" role="status"></div>
+        <div id="feed" class="feed"><div class="loading-card panel"><div class="loader"></div><span>Загружаем фотографии...</span></div></div>
+      </section>
+
+      <aside class="right-column">
+        <section class="side-card panel"><div class="side-card-title">О FOTO-POTO <span>✦</span></div><p>Небольшое место для больших моментов. Делись фотографиями, оставляй комментарии и поддерживай авторов.</p><div class="mini-stats"><div><strong>01</strong><span>ФОТОЛЕНТА</span></div><div><strong>∞</strong><span>ИДЕИ</span></div></div></section>
+        <section class="side-card rules-card panel"><div class="side-card-title">Правила фото <span>◈</span></div><ul><li>Публикуй то, чем можно делиться.</li><li>Порнография и откровенный сексуальный контент запрещены.</li><li>Уважай других участников.</li></ul><div class="ai-note"><span>✧</span><div><strong>Gemini check</strong><small>Проверка фото перед публикацией</small></div></div></section>
+        <div class="footer-note">FOTO-POTO · 2026<br>Сделано для хороших кадров.</div>
+      </aside>
+    </main>
+  </div>
+
+  <dialog id="auth-dialog" class="auth-dialog">
+    <form method="dialog" class="dialog-close-row"><button class="close-button" aria-label="Закрыть">×</button></form>
+    <p class="eyebrow">WELCOME TO FOTO-POTO</p><h2 id="auth-title">С возвращением!</h2><p class="auth-subtitle" id="auth-subtitle">Войди, чтобы публиковать фотографии и общаться.</p>
+    <form id="auth-form" class="auth-form">
+      <label>Email<input id="auth-email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+      <label>Пароль<input id="auth-password" type="password" minlength="6" autocomplete="current-password" required placeholder="Минимум 6 символов"></label>
+      <button class="button button-primary full-width" id="auth-submit" type="submit">Войти</button>
+    </form>
+    <button id="auth-switch" class="text-button">Нет аккаунта? Зарегистрироваться</button>
+    <p id="auth-message" class="auth-message" aria-live="polite"></p>
+  </dialog>
+
+  <template id="post-template">
+    <article class="post-card panel">
+      <div class="post-header"><div class="avatar post-avatar">F</div><div class="post-author"><strong class="author-name"></strong><span class="post-time"></span></div><span class="post-tag"></span></div>
+      <p class="post-caption"></p>
+      <img class="post-image" alt="Фотография из публикации" loading="lazy">
+      <div class="post-actions"><button class="like-button" type="button">♡ <span>0</span></button><span class="comment-count">0 комментариев</span></div>
+      <div class="comments-list"></div>
+      <form class="comment-form"><input maxlength="300" placeholder="Написать комментарий..." aria-label="Комментарий"><button type="submit" aria-label="Отправить комментарий">↗</button></form>
+    </article>
+  </template>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
