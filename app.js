@@ -15,6 +15,9 @@ let currentUser = null;
 let selectedFile = null;
 let authMode = "login";
 let postsCache = [];
+let currentProfile = null;
+let profileRequired = false;
+let themeMode = 'dark';
 
 function notice(message, error = false) {
   const el = $("#status-banner");
@@ -32,9 +35,55 @@ function timeAgo(value) {
   if (seconds < 86400) return Math.floor(seconds / 3600) + " ч. назад";
   return new Date(value).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 }
+
+function displayName() { return currentProfile?.username || "Участник"; }
+function applyTheme(mode, color) {
+  themeMode = mode;
+  const root = document.documentElement;
+  const light = mode === "light";
+  root.dataset.theme = mode;
+  const values = light
+    ? ["#f4f5f7","#ffffff","#eef0f3","#dedfe5","#20212a","#6d707c"]
+    : ["#101014","#19191f","#202027","#2c2c35","#f5f4f7","#92919d"];
+  ["--bg","--panel","--panel2","--line","--text","--muted"].forEach((key,i)=>root.style.setProperty(key,values[i]));
+  root.style.setProperty("--accent", color || (light ? "#7b9f35" : "#c7f36b"));
+  root.style.setProperty("--accent2", color || (light ? "#7b9f35" : "#a7d84d"));
+  localStorage.setItem("foto-poto-theme", JSON.stringify({mode,color:color||""}));
+}
+function openProfile() {
+  if (!currentUser) return openAuth();
+  $("#profile-username").value = currentProfile?.username || "";
+  $("#profile-message").textContent = "";
+  $("#profile-save").textContent = currentProfile ? "Сохранить изменения" : "Создать профиль";
+  $("#profile-close").classList.toggle("hidden", profileRequired);
+  $("#profile-signout").classList.toggle("hidden", profileRequired);
+  $("#profile-dialog").showModal();
+}
+async function loadProfile(user) {
+  currentProfile = null;
+  profileRequired = false;
+  if (!user || !configured) { $("#profile-open").classList.add("hidden"); return; }
+  $("#profile-open").classList.remove("hidden");
+  const {data,error} = await supabase.from("profiles").select("id,username").eq("id",user.id).maybeSingle();
+  if (error) { notice("Не удалось загрузить профиль: " + error.message,true); return; }
+  currentProfile = data;
+  profileRequired = !data;
+  $("#profile-open").textContent = data?.username?.slice(0,1).toUpperCase() || "?";
+  if (!data) {
+    $("#profile-username").value = "";
+    $("#profile-message").textContent = "Сначала придумай уникальный ник.";
+    $("#profile-save").textContent = "Создать профиль";
+    $("#profile-close").classList.add("hidden");
+    $("#profile-signout").classList.add("hidden");
+    if (!$("#profile-dialog").open) $("#profile-dialog").showModal();
+  }
+}
+
 function setUser(user) {
   currentUser = user;
-  $("#user-label").textContent = user ? (user.email?.split("@")[0] || "Участник") : "Гость";
+  $("#user-label").textContent = user ? (currentProfile?.username || "Настрой профиль") : "Гость";
+  $("#profile-open").classList.toggle("hidden", !user);
+  $("#profile-open").textContent = currentProfile?.username?.slice(0,1).toUpperCase() || "?";
   $("#auth-open").classList.toggle("hidden", !!user);
   $("#sign-out").classList.toggle("hidden", !user);
   $("#publish-hint").textContent = user
@@ -123,7 +172,7 @@ async function renderPost(post) {
     const input = event.currentTarget.querySelector("input");
     const body = input.value.trim();
     if (!body) return;
-    const { error } = await supabase.from("comments").insert({ post_id: post.id, user_id: currentUser.id, author_name: currentUser.email?.split("@")[0] || "Участник", body });
+    const { error } = await supabase.from("comments").insert({ post_id: post.id, user_id: currentUser.id, author_name: currentProfile?.username || "Участник", body });
     if (error) notice("Комментарий не отправлен: " + error.message, true);
     else { input.value = ""; await loadFeed(); }
   });
@@ -139,7 +188,53 @@ function setAuthMode(mode) {
   $("#auth-submit").textContent = signup ? "Зарегистрироваться" : "Войти";
   $("#auth-switch").textContent = signup ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться";
 }
+
 $("#auth-open").addEventListener("click", openAuth);
+$("#profile-open").addEventListener("click", openProfile);
+$("#profile-close").addEventListener("click", () => $("#profile-dialog").close());
+$("#profile-signout").addEventListener("click", async () => {
+  await supabase.auth.signOut();
+  currentProfile = null;
+  $("#profile-dialog").close();
+  setUser(null);
+  await loadFeed();
+});
+document.querySelectorAll(".theme-choice").forEach(button => button.addEventListener("click", () => {
+  const saved = JSON.parse(localStorage.getItem("foto-poto-theme") || "{}");
+  applyTheme(button.dataset.theme, saved.color || "");
+}));
+$("#custom-color").addEventListener("input", event => applyTheme(themeMode, event.target.value));
+$("#profile-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!currentUser) return;
+  const username = $("#profile-username").value.trim();
+  if (!/^[A-Za-zА-Яа-яЁё0-9_]{3,20}$/.test(username)) {
+    $("#profile-message").textContent = "Используй 3–20 букв, цифр или _.";
+    return;
+  }
+  const save = $("#profile-save");
+  save.disabled = true;
+  const result = currentProfile
+    ? await supabase.from("profiles").update({username, updated_at:new Date().toISOString()}).eq("id", currentUser.id).select("id,username").single()
+    : await supabase.from("profiles").insert({id:currentUser.id, username}).select("id,username").single();
+  save.disabled = false;
+  if (result.error) {
+    $("#profile-message").textContent = result.error.code === "23505" ? "Этот ник уже занят. Придумай другой." : "Не удалось сохранить: " + result.error.message;
+    return;
+  }
+  currentProfile = result.data;
+  profileRequired = false;
+  $("#user-label").textContent = currentProfile.username;
+  $("#profile-open").textContent = currentProfile.username.slice(0,1).toUpperCase();
+  $("#profile-close").classList.remove("hidden");
+  $("#profile-signout").classList.remove("hidden");
+  $("#profile-dialog").close();
+  notice("Профиль сохранён!");
+  await loadFeed();
+});
+const savedTheme = JSON.parse(localStorage.getItem("foto-poto-theme") || "null");
+if (savedTheme) applyTheme(savedTheme.mode, savedTheme.color);
+
 $("#google-signin").addEventListener("click", async () => {
   if (!configured) {
     $("#auth-message").textContent = "Сначала подключи Supabase и включи Google в Authentication → Sign In / Providers.";
@@ -230,7 +325,7 @@ $("#post-form").addEventListener("submit", async (event) => {
     const caption = $("#caption").value.trim();
     const { error: postError } = await supabase.from("posts").insert({
       user_id: currentUser.id,
-      author_name: currentUser.email?.split("@")[0] || "Участник",
+      author_name: currentProfile?.username || "Участник",
       caption,
       tag: $("#post-tag").value,
       image_url: publicUrl.publicUrl,
@@ -254,8 +349,8 @@ $("#post-form").addEventListener("submit", async (event) => {
 });
 
 if (configured) {
-  supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user || null); loadFeed(); });
-  supabase.auth.onAuthStateChange((_event, session) => { setUser(session?.user || null); loadFeed(); });
+  supabase.auth.getSession().then(async ({ data }) => { const user = data.session?.user || null; await loadProfile(user); setUser(user); loadFeed(); });
+  supabase.auth.onAuthStateChange(async (_event, session) => { const user = session?.user || null; await loadProfile(user); setUser(user); loadFeed(); });
 } else {
   setUser(null);
   $("#post-count").textContent = "Ожидает настройки";
