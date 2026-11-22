@@ -103,27 +103,55 @@ function safeText(element, value) { element.textContent = value || ""; }
 async function loadFeed() {
   if (!configured) {
     $("#post-count").textContent = "Пока нет публикаций";
-    showEmpty("Лента пока пустая", "Здесь будут фотографии, мемы и интересные моменты сообщества. Загляни чуть позже!");
+    showEmpty("Лента пока пустая", "Здесь будут фотографии, мемы и интересные моменты сообщества.");
     return;
   }
+  $("#post-count").textContent = "Загружаем публикации…";
   const sort = $("#sort-select").value;
   const { data, error } = await supabase.from("posts")
     .select("id,user_id,author_name,caption,tag,image_url,created_at,likes(count),comments(count)")
     .order("created_at", { ascending: false }).limit(12);
-  if (error) { showEmpty("Не удалось загрузить ленту", error.message); return; }
+  if (error) {
+    $("#post-count").textContent = "Не удалось загрузить";
+    showEmpty("Не удалось загрузить ленту", error.message);
+    return;
+  }
   postsCache = data || [];
   if (sort === "popular") postsCache.sort((a,b) => (b.likes?.[0]?.count || 0) - (a.likes?.[0]?.count || 0));
   $("#post-count").textContent = postsCache.length + " публикаций";
-  if (!postsCache.length) { showEmpty("Пока нет публикаций", "Когда участники поделятся фотографиями и мемами, они появятся здесь."); return; }
+  if (!postsCache.length) {
+    showEmpty("Пока нет публикаций", "Когда участники поделятся фотографиями и мемами, они появятся здесь.");
+    return;
+  }
+
   feed.innerHTML = "";
-  await Promise.all(postsCache.map(post => renderPost(post)));
+  const ids = postsCache.map(post => post.id);
+  let likedIds = new Set();
+  let commentsByPost = new Map();
+  const requests = [];
+  if (currentUser) {
+    requests.push(supabase.from("likes").select("post_id").eq("user_id", currentUser.id).in("post_id", ids)
+      .then(({data}) => { likedIds = new Set((data || []).map(row => row.post_id)); }));
+  }
+  requests.push(supabase.from("comments").select("id,post_id,author_name,body,created_at")
+    .in("post_id", ids).order("created_at", {ascending:true})
+    .then(({data}) => {
+      for (const comment of (data || [])) {
+        const list = commentsByPost.get(comment.post_id) || [];
+        if (list.length < 3) list.push(comment);
+        commentsByPost.set(comment.post_id, list);
+      }
+    }));
+  await Promise.all(requests);
+  for (const post of postsCache) {
+    renderPost(post, likedIds.has(post.id), commentsByPost.get(post.id) || []);
+  }
 }
 
-async function renderPost(post) {
+function renderPost(post, liked, comments) {
   const template = $("#post-template").content.cloneNode(true);
   const card = template.querySelector(".post-card");
-  const avatar = card.querySelector(".post-avatar");
-  safeText(avatar, (post.author_name || "F").slice(0,1).toUpperCase());
+  safeText(card.querySelector(".post-avatar"), (post.author_name || "F").slice(0,1).toUpperCase());
   safeText(card.querySelector(".author-name"), post.author_name || "Участник FOTO-POTO");
   safeText(card.querySelector(".post-time"), timeAgo(post.created_at));
   safeText(card.querySelector(".post-tag"), "#" + (post.tag || "Разное"));
@@ -134,47 +162,44 @@ async function renderPost(post) {
   image.fetchPriority = "low";
   image.src = post.image_url;
   image.alt = "Фото пользователя " + (post.author_name || "");
+
   const likeButton = card.querySelector(".like-button");
   const likeCount = post.likes?.[0]?.count || 0;
-  likeButton.querySelector("span").textContent = likeCount;
-  let liked = false;
-  if (currentUser) {
-    const { data } = await supabase.from("likes").select("id").eq("post_id", post.id).eq("user_id", currentUser.id).maybeSingle();
-    liked = !!data;
-  }
-  likeButton.classList.toggle("liked", liked);
-  likeButton.innerHTML = (liked ? "♥ " : "♡ ") + '<span>' + likeCount + '</span>';
+  const updateLikeButton = () => {
+    likeButton.classList.toggle("liked", liked);
+    likeButton.innerHTML = (liked ? "♥ " : "♡ ") + "<span>" + Math.max(0, likeCount + (liked ? 1 : 0)) + "</span>";
+  };
+  updateLikeButton();
   likeButton.addEventListener("click", async () => {
     if (!currentUser) return openAuth();
     likeButton.disabled = true;
-    if (liked) {
-      const { error } = await supabase.from("likes").delete().eq("post_id", post.id).eq("user_id", currentUser.id);
-      if (!error) { liked = false; likeButton.classList.remove("liked"); }
-    } else {
-      const { error } = await supabase.from("likes").insert({ post_id: post.id, user_id: currentUser.id });
-      if (!error) { liked = true; likeButton.classList.add("liked"); }
-    }
-    const count = Math.max(0, likeCount + (liked ? 1 : -1));
-    likeButton.innerHTML = (liked ? "♥ " : "♡ ") + '<span>' + count + '</span>';
+    const result = liked
+      ? await supabase.from("likes").delete().eq("post_id", post.id).eq("user_id", currentUser.id)
+      : await supabase.from("likes").insert({post_id:post.id,user_id:currentUser.id});
+    if (!result.error) liked = !liked;
+    else notice("Не удалось изменить лайк: " + result.error.message, true);
+    updateLikeButton();
     likeButton.disabled = false;
   });
-  const count = post.comments?.[0]?.count || 0;
-  safeText(card.querySelector(".comment-count"), count + " комментариев");
+
+  safeText(card.querySelector(".comment-count"), (post.comments?.[0]?.count || 0) + " комментариев");
   const commentsBox = card.querySelector(".comments-list");
-  const { data: comments } = await supabase.from("comments").select("id,author_name,body,created_at").eq("post_id", post.id).order("created_at", { ascending: true }).limit(3);
-  (comments || []).forEach(comment => {
+  for (const comment of comments) {
     const row = document.createElement("div"); row.className = "comment";
     const author = document.createElement("strong"); author.textContent = comment.author_name || "Участник";
     const body = document.createElement("span"); body.textContent = comment.body;
     row.append(author, body); commentsBox.append(row);
-  });
-  card.querySelector(".comment-form").addEventListener("submit", async (event) => {
+  }
+  card.querySelector(".comment-form").addEventListener("submit", async event => {
     event.preventDefault();
     if (!currentUser) return openAuth();
     const input = event.currentTarget.querySelector("input");
     const body = input.value.trim();
     if (!body) return;
-    const { error } = await supabase.from("comments").insert({ post_id: post.id, user_id: currentUser.id, author_name: currentProfile?.username || "Участник", body });
+    const {error} = await supabase.from("comments").insert({
+      post_id:post.id, user_id:currentUser.id,
+      author_name:currentProfile?.username || "Участник", body
+    });
     if (error) notice("Комментарий не отправлен: " + error.message, true);
     else { input.value = ""; await loadFeed(); }
   });
