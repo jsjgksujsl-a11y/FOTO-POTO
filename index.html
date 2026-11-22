@@ -14,6 +14,7 @@
 <body>
   <div class="app-shell">
     <header class="topbar">
+      <button id="profile-open" class="profile-circle hidden" type="button" aria-label="Открыть профиль">?</button>
       <a class="brand" href="./" aria-label="FOTO-POTO home"><span class="brand-mark">F</span><span>FOTO<span class="brand-dot">-</span>POTO</span></a>
       <div class="topbar-actions"><button class="button button-primary create-post-button" id="create-post-open">＋ Создать фото</button><span class="topbar-note">Твоя лента. Твои моменты.</span></div>
       <div class="account-area">
@@ -84,6 +85,23 @@
     </form>
     <button id="auth-switch" class="text-button">Нет аккаунта? Зарегистрироваться</button>
     <p id="auth-message" class="auth-message" aria-live="polite"></p>
+  </dialog>
+
+
+  <dialog id="profile-dialog" class="profile-dialog">
+    <div class="profile-dialog-head"><div><p class="eyebrow">ТВОЙ ПРОФИЛЬ</p><h2>Настройки профиля</h2></div><button class="close-button" id="profile-close" type="button" aria-label="Закрыть">×</button></div>
+    <form id="profile-form">
+      <label>Твой уникальный ник<input id="profile-username" type="text" minlength="3" maxlength="20" pattern="[A-Za-zА-Яа-яЁё0-9_]+" placeholder="Например, FotoMaster" required></label>
+      <p class="profile-hint">От 3 до 20 символов: буквы, цифры и подчёркивание. Ник должен быть свободен.</p>
+      <div class="profile-color-section"><strong>Цвет сайта</strong><div class="theme-options">
+        <button type="button" class="theme-choice" data-theme="dark">Тёмная</button>
+        <button type="button" class="theme-choice" data-theme="light">Светлая</button>
+        <label class="custom-color">Свой цвет<input id="custom-color" type="color" value="#c7f36b"></label>
+      </div></div>
+      <p id="profile-message" class="auth-message" aria-live="polite"></p>
+      <button class="button button-primary full-width" type="submit" id="profile-save">Сохранить профиль</button>
+    </form>
+    <button id="profile-signout" class="button button-quiet full-width profile-signout" type="button">Выйти из аккаунта</button>
   </dialog>
 
   <template id="post-template">
