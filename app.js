@@ -5,7 +5,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 const SUPABASE_URL = "https://vpefqotymnfimtfgqwpi.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_vNHCLd34pusrbWi3KAf_3A_KQMbZm1P";
 const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
-const supabase = configured ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {\n  auth: {\n    persistSession: true,\n    autoRefreshToken: true,\n    detectSessionInUrl: true,\n    storageKey: "foto-poto-auth-session"\n  }\n}) : null;
+const supabase = configured ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: "foto-poto-auth-session"
+  }
+}) : null;
 
 const $ = (selector) => document.querySelector(selector);
 const feed = $("#feed");
