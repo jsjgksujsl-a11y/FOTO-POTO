@@ -15,7 +15,7 @@
   <div class="app-shell">
     <header class="topbar">
       <a class="brand" href="./" aria-label="FOTO-POTO home"><span class="brand-mark">F</span><span>FOTO<span class="brand-dot">-</span>POTO</span></a>
-      <div class="topbar-note">Твоя лента. Твои моменты.</div>
+      <div class="topbar-actions"><button class="button button-primary create-post-button" id="create-post-open">＋ Создать фото</button><span class="topbar-note">Твоя лента. Твои моменты.</span></div>
       <div class="account-area">
         <span id="user-label" class="user-label">Гость</span>
         <button id="auth-open" class="button button-quiet">Войти</button>
@@ -37,7 +37,22 @@
           <div class="live-mark"><i></i> ФОТОЛЕНТА</div>
         </div>
 
-        <section id="composer" class="composer panel">
+        <div class="feed-toolbar"><div><strong>Лента сообщества</strong><span id="post-count">Загружаем...</span></div><select id="sort-select" aria-label="Сортировка"><option value="new">Сначала новые</option><option value="popular">Популярные</option></select></div>
+        <div id="status-banner" class="status-banner hidden" role="status"></div>
+        <div id="feed" class="feed"><div class="loading-card panel"><div class="loader"></div><span>Загружаем фотографии...</span></div></div>
+      </section>
+
+      <aside class="right-column">
+        <section class="side-card panel"><div class="side-card-title">О FOTO-POTO <span>✦</span></div><p>Небольшое место для больших моментов. Делись фотографиями, оставляй комментарии и поддерживай авторов.</p><div class="mini-stats"><div><strong>01</strong><span>ФОТОЛЕНТА</span></div><div><strong>∞</strong><span>ИДЕИ</span></div></div></section>
+        <section class="side-card rules-card panel"><div class="side-card-title">Правила фото <span>◈</span></div><ul><li>Публикуй то, чем можно делиться.</li><li>Порнография и откровенный сексуальный контент запрещены.</li><li>Уважай других участников.</li></ul><div class="ai-note"><span>✧</span><div><strong>Gemini check</strong><small>Проверка фото перед публикацией</small></div></div></section>
+        <div class="footer-note">FOTO-POTO · 2026<br>Сделано для хороших кадров.</div>
+      </aside>
+    </main>
+  </div>
+
+  <dialog id="composer-dialog" class="composer-dialog">
+    <div class="composer-dialog-head"><div><p class="eyebrow">НОВАЯ ПУБЛИКАЦИЯ</p><h2>Поделись моментом</h2></div><button class="close-button" id="composer-close" type="button" aria-label="Закрыть">×</button></div>
+    <section id="composer" class="composer panel">
           <div class="composer-heading"><div class="avatar avatar-self">+</div><div><strong>Есть чем поделиться?</strong><span>Добавь новый кадр в FOTO-POTO</span></div></div>
           <form id="post-form">
             <label class="upload-zone" for="photo-file" id="upload-zone">
@@ -55,19 +70,7 @@
             <p class="form-hint" id="publish-hint">Для публикации войди в аккаунт. Каждое фото проходит проверку на откровенный сексуальный контент.</p>
           </form>
         </section>
-
-        <div class="feed-toolbar"><div><strong>Лента сообщества</strong><span id="post-count">Загружаем...</span></div><select id="sort-select" aria-label="Сортировка"><option value="new">Сначала новые</option><option value="popular">Популярные</option></select></div>
-        <div id="status-banner" class="status-banner hidden" role="status"></div>
-        <div id="feed" class="feed"><div class="loading-card panel"><div class="loader"></div><span>Загружаем фотографии...</span></div></div>
-      </section>
-
-      <aside class="right-column">
-        <section class="side-card panel"><div class="side-card-title">О FOTO-POTO <span>✦</span></div><p>Небольшое место для больших моментов. Делись фотографиями, оставляй комментарии и поддерживай авторов.</p><div class="mini-stats"><div><strong>01</strong><span>ФОТОЛЕНТА</span></div><div><strong>∞</strong><span>ИДЕИ</span></div></div></section>
-        <section class="side-card rules-card panel"><div class="side-card-title">Правила фото <span>◈</span></div><ul><li>Публикуй то, чем можно делиться.</li><li>Порнография и откровенный сексуальный контент запрещены.</li><li>Уважай других участников.</li></ul><div class="ai-note"><span>✧</span><div><strong>Gemini check</strong><small>Проверка фото перед публикацией</small></div></div></section>
-        <div class="footer-note">FOTO-POTO · 2026<br>Сделано для хороших кадров.</div>
-      </aside>
-    </main>
-  </div>
+  </dialog>
 
   <dialog id="auth-dialog" class="auth-dialog">
     <form method="dialog" class="dialog-close-row"><button class="close-button" aria-label="Закрыть">×</button></form>
