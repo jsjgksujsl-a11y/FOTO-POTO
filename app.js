@@ -109,14 +109,14 @@ async function loadFeed() {
   const sort = $("#sort-select").value;
   const { data, error } = await supabase.from("posts")
     .select("id,user_id,author_name,caption,tag,image_url,created_at,likes(count),comments(count)")
-    .order("created_at", { ascending: false }).limit(60);
+    .order("created_at", { ascending: false }).limit(12);
   if (error) { showEmpty("Не удалось загрузить ленту", error.message); return; }
   postsCache = data || [];
   if (sort === "popular") postsCache.sort((a,b) => (b.likes?.[0]?.count || 0) - (a.likes?.[0]?.count || 0));
   $("#post-count").textContent = postsCache.length + " публикаций";
   if (!postsCache.length) { showEmpty("Пока нет публикаций", "Когда участники поделятся фотографиями и мемами, они появятся здесь."); return; }
   feed.innerHTML = "";
-  for (const post of postsCache) await renderPost(post);
+  await Promise.all(postsCache.map(post => renderPost(post)));
 }
 
 async function renderPost(post) {
@@ -129,6 +129,9 @@ async function renderPost(post) {
   safeText(card.querySelector(".post-tag"), "#" + (post.tag || "Разное"));
   safeText(card.querySelector(".post-caption"), post.caption);
   const image = card.querySelector(".post-image");
+  image.loading = "lazy";
+  image.decoding = "async";
+  image.fetchPriority = "low";
   image.src = post.image_url;
   image.alt = "Фото пользователя " + (post.author_name || "");
   const likeButton = card.querySelector(".like-button");
@@ -294,14 +297,30 @@ $("#photo-file").addEventListener("change", (event) => {
   $("#upload-zone").querySelector("strong").textContent = selectedFile.name;
   clearNotice();
 });
+async function compressPhoto(file) {
+  const bitmap = await createImageBitmap(file);
+  const maxSide = 1440;
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const context = canvas.getContext("2d", { alpha: false });
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close?.();
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.78));
+  if (!blob) throw new Error("Не удалось уменьшить фотографию.");
+  return new File([blob], "foto-poto.jpg", { type: "image/jpeg" });
+}
+
 $("#post-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!configured) return notice("Backend ещё не подключён. Сначала настрой Supabase по README.", true);
   if (!currentUser) return openAuth();
   if (!selectedFile) return notice("Сначала выбери фотографию.", true);
   const button = $("#publish-button");
-  button.disabled = true; button.textContent = "Проверяем фото...";
+  button.disabled = true; button.textContent = "Уменьшаем фото...";
   try {
+    selectedFile = await compressPhoto(selectedFile);
     const base64 = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result).split(",")[1]);
