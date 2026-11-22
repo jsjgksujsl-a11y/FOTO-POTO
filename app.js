@@ -85,7 +85,6 @@ function setUser(user) {
   $("#profile-open").classList.toggle("hidden", !user);
   $("#profile-open").textContent = currentProfile?.username?.slice(0,1).toUpperCase() || "?";
   $("#auth-open").classList.toggle("hidden", !!user);
-  $("#sign-out").classList.toggle("hidden", !user);
   $("#publish-hint").textContent = user
     ? "Фото сначала проверит Gemini. Если проверка не пройдёт, публикация не появится в ленте."
     : "Для публикации войди в аккаунт. Фото проверяются на откровенный сексуальный контент.";
@@ -271,10 +270,6 @@ $("#auth-form").addEventListener("submit", async (event) => {
     return;
   }
   authDialog.close(); setUser(result.data.user); clearNotice(); await loadFeed();
-});
-$("#sign-out").addEventListener("click", async () => {
-  if (supabase) await supabase.auth.signOut();
-  setUser(null); await loadFeed();
 });
 $("#sort-select").addEventListener("change", loadFeed);
 $("#feed-nav").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
