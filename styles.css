@@ -27,3 +27,10 @@
  .composer-dialog{padding:16px}
  .composer-dialog-head h2{font-size:19px}
 }
+
+.google-signin{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 15px;border:1px solid #454550;border-radius:12px;background:#f7f7f8;color:#202124;font-size:13px;font-weight:700;transition:.18s}
+.google-signin:hover{background:#fff;transform:translateY(-1px)}
+.google-signin:disabled{opacity:.65;cursor:wait;transform:none}
+.google-g{font:800 18px Arial,sans-serif;color:#4285f4;background:#fff;width:23px;height:23px;display:grid;place-items:center;border-radius:50%}
+.auth-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:10px;margin:17px 0}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;background:var(--line);flex:1}
