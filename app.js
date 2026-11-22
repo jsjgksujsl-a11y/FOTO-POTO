@@ -2,8 +2,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 // Add the project URL and publishable key from Supabase before deployment.
 // Never put a Supabase service-role key or Gemini API key in this file.
-const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
+const SUPABASE_URL = "https://vpefqotymnfimtfgqwpi.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_vNHCLd34pusrbWi3KAf_3A_KQMbZm1P";
 const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const supabase = configured ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
