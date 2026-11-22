@@ -140,6 +140,24 @@ function setAuthMode(mode) {
   $("#auth-switch").textContent = signup ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться";
 }
 $("#auth-open").addEventListener("click", openAuth);
+$("#google-signin").addEventListener("click", async () => {
+  if (!configured) {
+    $("#auth-message").textContent = "Сначала подключи Supabase и включи Google в Authentication → Sign In / Providers.";
+    return;
+  }
+  const button = $("#google-signin");
+  button.disabled = true;
+  button.textContent = "Переходим к Google...";
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  if (error) {
+    $("#auth-message").textContent = "Не удалось войти через Google: " + error.message;
+    button.disabled = false;
+    button.innerHTML = '<span class="google-g">G</span> Продолжить с Google';
+  }
+});
 $("#auth-switch").addEventListener("click", () => setAuthMode(authMode === "login" ? "signup" : "login"));
 $("#auth-form").addEventListener("submit", async (event) => {
   event.preventDefault();
