@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 const SUPABASE_URL = "https://vpefqotymnfimtfgqwpi.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_vNHCLd34pusrbWi3KAf_3A_KQMbZm1P";
 const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
-const supabase = configured ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const supabase = configured ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {\n  auth: {\n    persistSession: true,\n    autoRefreshToken: true,\n    detectSessionInUrl: true,\n    storageKey: "foto-poto-auth-session"\n  }\n}) : null;
 
 const $ = (selector) => document.querySelector(selector);
 const feed = $("#feed");
@@ -346,8 +346,30 @@ $("#post-form").addEventListener("submit", async (event) => {
 });
 
 if (configured) {
-  supabase.auth.getSession().then(async ({ data }) => { const user = data.session?.user || null; await loadProfile(user); setUser(user); loadFeed(); });
-  supabase.auth.onAuthStateChange(async (_event, session) => { const user = session?.user || null; await loadProfile(user); setUser(user); loadFeed(); });
+  let sessionRestoreStarted = false;
+  async function syncSignedInUser(user) {
+    await loadProfile(user);
+    setUser(user);
+    await loadFeed();
+  }
+  // Restore the saved session on every visit.
+  supabase.auth.getSession().then(async ({ data, error }) => {
+    if (error) {
+      notice("Не удалось восстановить вход: " + error.message, true);
+      setUser(null);
+      return;
+    }
+    sessionRestoreStarted = true;
+    await syncSignedInUser(data.session?.user || null);
+  });
+  // Keep the auth callback synchronous; do Supabase requests after it returns.
+  supabase.auth.onAuthStateChange((_event, session) => {
+    const user = session?.user || null;
+    setUser(user);
+    if (sessionRestoreStarted) {
+      window.setTimeout(() => { syncSignedInUser(user); }, 0);
+    }
+  });
 } else {
   setUser(null);
   $("#post-count").textContent = "Ожидает настройки";
