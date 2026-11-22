@@ -10,6 +10,7 @@ const supabase = configured ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : nu
 const $ = (selector) => document.querySelector(selector);
 const feed = $("#feed");
 const authDialog = $("#auth-dialog");
+const composerDialog = $("#composer-dialog");
 let currentUser = null;
 let selectedFile = null;
 let authMode = "login";
@@ -53,8 +54,8 @@ function safeText(element, value) { element.textContent = value || ""; }
 
 async function loadFeed() {
   if (!configured) {
-    $("#post-count").textContent = "Нужна настройка backend";
-    showEmpty("Почти готово!", "Подключи Supabase по инструкции в README — тогда публикации станут общими для всех пользователей.");
+    $("#post-count").textContent = "Пока нет публикаций";
+    showEmpty("Лента пока пустая", "Здесь будут фотографии, мемы и интересные моменты сообщества. Загляни чуть позже!");
     return;
   }
   const sort = $("#sort-select").value;
@@ -65,7 +66,7 @@ async function loadFeed() {
   postsCache = data || [];
   if (sort === "popular") postsCache.sort((a,b) => (b.likes?.[0]?.count || 0) - (a.likes?.[0]?.count || 0));
   $("#post-count").textContent = postsCache.length + " публикаций";
-  if (!postsCache.length) { showEmpty("Здесь пока тихо", "Стань первым, кто добавит фотографию в FOTO-POTO."); return; }
+  if (!postsCache.length) { showEmpty("Пока нет публикаций", "Когда участники поделятся фотографиями и мемами, они появятся здесь."); return; }
   feed.innerHTML = "";
   for (const post of postsCache) await renderPost(post);
 }
@@ -163,7 +164,14 @@ $("#sign-out").addEventListener("click", async () => {
 });
 $("#sort-select").addEventListener("change", loadFeed);
 $("#feed-nav").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-$("#new-post-nav").addEventListener("click", () => $("#composer").scrollIntoView({ behavior: "smooth" }));
+function openComposer() {
+  if (!currentUser) return openAuth();
+  composerDialog.showModal();
+}
+$("#create-post-open").addEventListener("click", openComposer);
+$("#new-post-nav").addEventListener("click", openComposer);
+$("#composer-close").addEventListener("click", () => composerDialog.close());
+composerDialog.addEventListener("click", (event) => { if (event.target === composerDialog) composerDialog.close(); });
 $("#photo-file").addEventListener("change", (event) => {
   selectedFile = event.target.files?.[0] || null;
   if (!selectedFile) return;
@@ -217,6 +225,7 @@ $("#post-form").addEventListener("submit", async (event) => {
     $("#post-form").reset(); selectedFile = null;
     $("#image-preview").removeAttribute("src"); $("#image-preview").classList.add("hidden");
     $("#upload-zone").querySelector("strong").textContent = "Выбрать фотографию";
+    composerDialog.close();
     notice("Готово! Фото прошло проверку и опубликовано.");
     await loadFeed();
   } catch (error) {
@@ -232,7 +241,6 @@ if (configured) {
 } else {
   setUser(null);
   $("#post-count").textContent = "Ожидает настройки";
-  showEmpty("FOTO-POTO готовится к запуску", "Подключи бесплатный backend Supabase по инструкции в README.");
-  notice("Это пока интерфейс. Для настоящих аккаунтов, общей ленты и публикаций нужно подключить Supabase и Gemini API.", true);
+  showEmpty("Лента пока пустая", "Здесь будут фотографии и мемы сообщества. Публикации появятся после подключения сервера.");
 }
 setAuthMode("login");
