@@ -192,6 +192,7 @@ function setAuthMode(mode) {
 $("#auth-open").addEventListener("click", openAuth);
 $("#profile-open").addEventListener("click", openProfile);
 $("#profile-close").addEventListener("click", () => $("#profile-dialog").close());
+$("#profile-dialog").addEventListener("cancel", event => { if (profileRequired) event.preventDefault(); });
 $("#profile-signout").addEventListener("click", async () => {
   await supabase.auth.signOut();
   currentProfile = null;
@@ -279,6 +280,7 @@ $("#sort-select").addEventListener("change", loadFeed);
 $("#feed-nav").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 function openComposer() {
   if (!currentUser) return openAuth();
+  if (!currentProfile) return openProfile();
   composerDialog.showModal();
 }
 $("#create-post-open").addEventListener("click", openComposer);
