@@ -150,7 +150,7 @@ $("#google-signin").addEventListener("click", async () => {
   button.textContent = "Переходим к Google...";
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: window.location.origin + window.location.pathname }
+    options: { redirectTo: "https://jsjgksujsl-a11y.github.io/FOTO-POTO/" }
   });
   if (error) {
     $("#auth-message").textContent = "Не удалось войти через Google: " + error.message;
