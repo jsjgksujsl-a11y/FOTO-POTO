@@ -53,8 +53,13 @@ function applyTheme(mode, color) {
     ? ["#f4f5f7","#ffffff","#eef0f3","#dedfe5","#20212a","#6d707c"]
     : ["#101014","#19191f","#202027","#2c2c35","#f5f4f7","#92919d"];
   ["--bg","--panel","--panel2","--line","--text","--muted"].forEach((key,i)=>root.style.setProperty(key,values[i]));
-  root.style.setProperty("--accent", color || (light ? "#7b9f35" : "#c7f36b"));
-  root.style.setProperty("--accent2", color || (light ? "#7b9f35" : "#a7d84d"));
+  const accent = color || (light ? "#7b9f35" : "#c7f36b");
+  root.style.setProperty("--accent", accent);
+  root.style.setProperty("--accent2", accent);
+  const hex = accent.replace("#", "");
+  const rgb = hex.length === 6 ? [0,2,4].map(i => parseInt(hex.slice(i,i+2),16)) : [199,243,107];
+  const luminance = (0.299*rgb[0] + 0.587*rgb[1] + 0.114*rgb[2]);
+  root.style.setProperty("--profile-ink", luminance > 150 ? "#111111" : "#ffffff");
   localStorage.setItem("foto-poto-theme", JSON.stringify({mode,color:color||""}));
 }
 function openProfile() {
