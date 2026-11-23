@@ -50,10 +50,10 @@ function applyTheme(mode, color) {
   const light = mode === "light";
   root.dataset.theme = mode;
   const values = light
-    ? ["#f4f5f7","#ffffff","#eef0f3","#dedfe5","#20212a","#6d707c"]
-    : ["#101014","#19191f","#202027","#2c2c35","#f5f4f7","#92919d"];
+    ? ["#f7f5ff","#ffffff","#f0edfa","#ddd7ed","#211b31","#665d78"]
+    : ["#171322","#211b30","#2b2440","#3b3153","#fbf8ff","#b8aecb"];
   ["--bg","--panel","--panel2","--line","--text","--muted"].forEach((key,i)=>root.style.setProperty(key,values[i]));
-  const accent = color || (light ? "#7b9f35" : "#c7f36b");
+  const accent = color || (light ? "#7654d6" : "#c7ff5e");
   root.style.setProperty("--accent", accent);
   root.style.setProperty("--accent2", accent);
   const hex = accent.replace("#", "");
@@ -164,7 +164,7 @@ function renderPost(post, liked, comments) {
   const template = $("#post-template").content.cloneNode(true);
   const card = template.querySelector(".post-card");
   safeText(card.querySelector(".post-avatar"), (post.author_name || "F").slice(0,1).toUpperCase());
-  safeText(card.querySelector(".author-name"), post.author_name || "Участник FOTO-POTO");
+  safeText(card.querySelector(".author-name"), post.author_name || "Участник ЖМЯК");
   safeText(card.querySelector(".post-time"), timeAgo(post.created_at));
   safeText(card.querySelector(".post-tag"), "#" + (post.tag || "Разное"));
   safeText(card.querySelector(".post-caption"), post.caption);
@@ -223,7 +223,7 @@ function setAuthMode(mode) {
   authMode = mode;
   const signup = mode === "signup";
   $("#auth-title").textContent = signup ? "Создай аккаунт" : "С возвращением!";
-  $("#auth-subtitle").textContent = signup ? "Присоединяйся к FOTO-POTO." : "Войди, чтобы публиковать фотографии и общаться.";
+  $("#auth-subtitle").textContent = signup ? "Присоединяйся к ЖМЯК." : "Войди, чтобы публиковать фотографии и общаться.";
   $("#auth-submit").textContent = signup ? "Зарегистрироваться" : "Войти";
   $("#auth-switch").textContent = signup ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться";
 }
@@ -285,7 +285,7 @@ $("#google-signin").addEventListener("click", async () => {
   button.textContent = "Переходим к Google...";
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: "https://jsjgksujsl-a11y.github.io/FOTO-POTO/" }
+    options: { redirectTo: "https://jsjgksujsl-a11y.github.io/ЖМЯК/" }
   });
   if (error) {
     $("#auth-message").textContent = "Не удалось войти через Google: " + error.message;
@@ -346,7 +346,7 @@ async function compressPhoto(file) {
   bitmap.close?.();
   const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.78));
   if (!blob) throw new Error("Не удалось уменьшить фотографию.");
-  return new File([blob], "foto-poto.jpg", { type: "image/jpeg" });
+  return new File([blob], "zhmyak.jpg", { type: "image/jpeg" });
 }
 
 $("#post-form").addEventListener("submit", async (event) => {
